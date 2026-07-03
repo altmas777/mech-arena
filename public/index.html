@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MECH ARENA — Arena of Legends</title>
+  <meta name="description" content="MECH ARENA — The AI-powered 3D fighting game where YOUR face becomes the fighter. Upload your photo and battle for supremacy in the arena!" />
+  <link rel="stylesheet" href="/css/style.css" />
+
+  <!-- Three.js + Addons via CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Animated background -->
+  <div class="bg-animated"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="page-wrapper" id="home-wrapper">
+    <!-- Logo -->
+    <header class="auth-header" style="margin-bottom: 60px;">
+      <div class="logo-title">MECH ARENA</div>
+      <div class="logo-sub">Arena of Legends</div>
+    </header>
+
+    <!-- Main CTA -->
+    <main>
+      <div class="glass-card auth-card" style="max-width: 440px; width: 90vw; text-align: center;">
+        <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 32px; line-height: 1.8;">
+          The world's first AI-powered 3D fighting game where your <strong style="color: var(--fire-orange);">real face</strong> becomes the fighter. Upload your photo, get AI-generated stats, and battle in real-time 3D.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <a href="/login.html" id="btn-login">
+            <button class="btn btn-primary" style="font-size: 15px; padding: 18px;">
+              ⚡ ENTER THE ARENA
+            </button>
+          </a>
+          <a href="/login.html">
+            <button class="btn btn-secondary">
+              CREATE ACCOUNT
+            </button>
+          </a>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Feature list -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left;">
+          <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <span style="font-size: 20px;">🎭</span>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-bottom: 2px;">YOUR FACE</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Photo mapped to 3D fighter model</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <span style="font-size: 20px;">🤖</span>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-bottom: 2px;">AI STATS</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Gemini Vision analyzes your face</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <span style="font-size: 20px;">🎮</span>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-bottom: 2px;">3D ENGINE</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Three.js powered real-time battles</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <span style="font-size: 20px;">🔥</span>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-bottom: 2px;">KOMBAT</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">MK-style brutal fighting system</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Particle system
+    const container = document.getElementById('particles');
+    const colors = ['#ff3c00', '#ff6600', '#ffaa00', '#c0392b', '#ff0040'];
+
+    function createParticle() {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 4 + 1;
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        width: ${size}px;
+        height: ${size}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration: ${Math.random() * 8 + 6}s;
+        animation-delay: ${Math.random() * 6}s;
+        box-shadow: 0 0 ${size * 2}px currentColor;
+      `;
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 15000);
+    }
+
+    setInterval(createParticle, 300);
+    for (let i = 0; i < 15; i++) createParticle();
+  </script>
+  <!-- Footer -->
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
+    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
+  </footer></body>
+</html>

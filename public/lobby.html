@@ -1,0 +1,303 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Lobby — MECH ARENA</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .lobby-card {
+      max-width: 560px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .code-box {
+      font-family: var(--font-display);
+      font-size: 72px;
+      letter-spacing: 18px;
+      color: var(--fire-orange);
+      padding: 24px 40px;
+      border: 2px solid var(--fire-orange);
+      background: rgba(217, 4, 41, 0.08);
+      box-shadow: 0 0 40px rgba(217, 4, 41, 0.25), inset 0 0 40px rgba(217, 4, 41, 0.05);
+      text-align: center;
+      animation: codePulse 2s ease-in-out infinite;
+      position: relative;
+    }
+
+    @keyframes codePulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(217,4,41,0.25), inset 0 0 30px rgba(217,4,41,0.05); }
+      50%       { box-shadow: 0 0 60px rgba(217,4,41,0.5),  inset 0 0 50px rgba(217,4,41,0.1); }
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      font-family: var(--font-heading);
+      font-size: 10px;
+      letter-spacing: 2px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+
+    .waiting-pulse {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: var(--text-secondary);
+    }
+
+    .waiting-dots span {
+      animation: dotBlink 1.2s infinite;
+      opacity: 0;
+    }
+    .waiting-dots span:nth-child(1) { animation-delay: 0s; }
+    .waiting-dots span:nth-child(2) { animation-delay: 0.3s; }
+    .waiting-dots span:nth-child(3) { animation-delay: 0.6s; }
+    @keyframes dotBlink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+    .matched-card {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: rgba(0, 200, 80, 0.05);
+      border: 1px solid rgba(0, 200, 80, 0.3);
+      padding: 30px 40px;
+      text-align: center;
+    }
+
+    .join-input-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    #join-code-input {
+      flex: 1;
+      font-size: 28px;
+      letter-spacing: 10px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .status-msg {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      letter-spacing: 3px;
+      min-height: 20px;
+    }
+    .status-msg.error { color: var(--fire-orange); }
+    .status-msg.success { color: #4ade80; }
+  </style>
+</head>
+<body class="scrollable">
+  <div class="bg-animated"></div>
+
+  <div class="page-wrapper" style="min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;">
+
+    <div class="lobby-card">
+
+      <div style="text-align:center;">
+        <div class="logo-title" style="font-size:48px;">MECH ARENA</div>
+        <div class="logo-sub" id="lobby-subtitle" style="margin-top:8px;">ONLINE ARENA</div>
+      </div>
+
+      <!-- ── CREATE ROOM panel ─────────────────────────────── -->
+      <div id="create-panel" style="display:none;width:100%;flex-direction:column;align-items:center;gap:28px;">
+        <div style="font-family:var(--font-heading);font-size:12px;letter-spacing:4px;color:var(--text-muted);">YOUR ROOM CODE</div>
+        <div class="code-box" id="room-code-display">
+          ------
+          <button class="copy-btn" id="copy-btn" onclick="copyCode()">COPY</button>
+        </div>
+
+        <div class="waiting-pulse">
+          <div class="waiting-dots">
+            <span>●</span><span>●</span><span>●</span>
+          </div>
+          WAITING FOR CHALLENGER
+        </div>
+
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:3px;color:var(--text-muted);text-align:center;max-width:360px;line-height:1.8;">
+          Share this code with your opponent.<br>
+          They enter it in <strong>JOIN ROOM</strong> on their device.
+        </div>
+
+        <!-- Matched state -->
+        <div class="matched-card" id="matched-info">
+          <div style="font-size:28px;">⚔️</div>
+          <div style="font-family:var(--font-display);font-size:32px;letter-spacing:4px;color:#4ade80;">CHALLENGER FOUND!</div>
+          <div id="opponent-name" style="font-family:var(--font-heading);font-size:14px;letter-spacing:3px;color:var(--text-secondary);"></div>
+          <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:3px;color:var(--text-muted);">LOADING ARENA...</div>
+          <div class="spinner" style="display:block;margin:8px auto;"></div>
+        </div>
+      </div>
+
+      <!-- ── JOIN ROOM panel ────────────────────────────────── -->
+      <div id="join-panel" style="display:none;width:100%;flex-direction:column;align-items:center;gap:24px;">
+        <div style="font-family:var(--font-heading);font-size:12px;letter-spacing:4px;color:var(--text-muted);">ENTER ROOM CODE</div>
+
+        <div class="join-input-row" style="width:100%;max-width:400px;">
+          <input type="text" id="join-code-input" class="form-input"
+            placeholder="e.g. A1B2C3" maxlength="6"
+            autocomplete="off" spellcheck="false"
+            style="font-size:28px;letter-spacing:10px;text-transform:uppercase;text-align:center;
+                   pointer-events:auto;cursor:text;position:relative;z-index:20;" />
+        </div>
+        <button class="btn btn-primary" id="join-btn" style="width:100%;max-width:400px;padding:18px;font-size:16px;letter-spacing:4px;">JOIN ARENA</button>
+
+        <div class="status-msg" id="join-status"></div>
+      </div>
+
+      <a href="/select.html" style="font-family:var(--font-heading);font-size:11px;letter-spacing:3px;color:var(--text-muted);margin-top:8px;">← BACK TO MENU</a>
+
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const token = localStorage.getItem('ff_token');
+    if (!token) window.location.href = '/login.html';
+
+    const params   = new URLSearchParams(window.location.search);
+    const mode     = params.get('mode');   // 'create' or 'join'
+    const myFighter = JSON.parse(sessionStorage.getItem('ff_p1') || 'null');
+
+    if (!myFighter) window.location.href = '/select.html';
+
+    const socket = io();
+    let roomCode = null;
+
+    socket.on('connect', () => {
+      if (mode === 'create') {
+        socket.emit('createRoom', myFighter);
+      }
+    });
+
+    // ── CREATE MODE ──────────────────────────────────────────────────────────────
+
+    if (mode === 'create') {
+      document.getElementById('lobby-subtitle').textContent = 'CREATE ROOM';
+      const panel = document.getElementById('create-panel');
+      panel.style.display = 'flex';
+
+      socket.on('roomCreated', ({ code }) => {
+        roomCode = code;
+        document.getElementById('room-code-display').childNodes[0].textContent = code;
+      });
+
+      socket.on('matchFound', ({ role, opponentFighter, roomId }) => {
+        sessionStorage.setItem('ff_mp_role',   role);
+        sessionStorage.setItem('ff_mp_room',   roomId || roomCode);
+        sessionStorage.setItem('ff_mp_opp',    JSON.stringify(opponentFighter));
+
+        // Show matched card
+        const mc = document.getElementById('matched-info');
+        mc.style.display = 'flex';
+        document.getElementById('opponent-name').textContent =
+          `VS  ${opponentFighter.name.toUpperCase()}`;
+
+        // Navigate to game after short delay
+        setTimeout(() => {
+          window.location.href = `/game.html?mode=mp&role=${role}&room=${roomId || roomCode}`;
+        }, 1800);
+      });
+    }
+
+    // ── JOIN MODE ─────────────────────────────────────────────────────────────────
+
+    if (mode === 'join') {
+      document.getElementById('lobby-subtitle').textContent = 'JOIN ROOM';
+      const panel = document.getElementById('join-panel');
+      panel.style.display = 'flex';
+
+      const input    = document.getElementById('join-code-input');
+      const joinBtn  = document.getElementById('join-btn');
+      const statusEl = document.getElementById('join-status');
+
+      // Focus the input AFTER the panel is visible (autofocus won't work on hidden elements)
+      requestAnimationFrame(() => {
+        input.focus();
+        input.click();
+      });
+
+      // Ensure input captures all keypresses — stop any parent interference
+      input.addEventListener('keydown', e => {
+        e.stopPropagation();
+        if (e.key === 'Enter') tryJoin();
+      });
+      input.addEventListener('keyup',   e => e.stopPropagation());
+      input.addEventListener('keypress', e => e.stopPropagation());
+      input.addEventListener('paste',   e => e.stopPropagation());
+      input.addEventListener('input', () => {
+        // Auto-uppercase as user types
+        const pos = input.selectionStart;
+        input.value = input.value.toUpperCase();
+        input.setSelectionRange(pos, pos);
+      });
+
+      function tryJoin() {
+        const code = input.value.trim().toUpperCase();
+        if (code.length < 4) {
+          statusEl.textContent = '⚠ CODE TOO SHORT';
+          statusEl.className   = 'status-msg error';
+          input.focus();
+          return;
+        }
+        joinBtn.disabled     = true;
+        input.disabled       = false; // keep readable
+        statusEl.textContent = 'CONNECTING...';
+        statusEl.className   = 'status-msg';
+        socket.emit('joinRoom', { code, fighterData: myFighter });
+      }
+
+      joinBtn.addEventListener('click', tryJoin);
+
+      socket.on('joinError', (msg) => {
+        statusEl.textContent = `⚠ ${msg}`;
+        statusEl.className   = 'status-msg error';
+        joinBtn.disabled = false;
+        input.focus();
+      });
+
+      socket.on('matchFound', ({ role, opponentFighter, roomId }) => {
+        statusEl.textContent = `✅ MATCHED! ENTERING ARENA...`;
+        statusEl.className   = 'status-msg success';
+
+        const code = input.value.trim().toUpperCase();
+        sessionStorage.setItem('ff_mp_role',   role);
+        sessionStorage.setItem('ff_mp_room',   roomId || code);
+        sessionStorage.setItem('ff_mp_opp',    JSON.stringify(opponentFighter));
+
+        setTimeout(() => {
+          window.location.href = `/game.html?mode=mp&role=${role}&room=${roomId || code}`;
+        }, 1200);
+      });
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(roomCode || '').then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'COPIED!';
+        setTimeout(() => btn.textContent = 'COPY', 2000);
+      });
+    }
+  </script>
+  <!-- Footer -->
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
+    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
+  </footer></body>
+</html>

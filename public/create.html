@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Fighter — MECH ARENA</title>
+  <meta name="description" content="Upload your face photo, pick your suit and power for MECH ARENA." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .select-group { margin-bottom: 20px; }
+    .select-group select {
+      width: 100%;
+      background: rgba(20, 20, 40, 0.7);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .select-group select:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+  </style>
+</head>
+<body class="scrollable">
+  <div class="bg-animated"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="page-wrapper" style="min-height: 100vh; justify-content: flex-start; padding: 40px 20px 80px;">
+    <div class="create-page">
+
+      <!-- Header -->
+      <header style="text-align: center; margin-bottom: 40px;">
+        <a href="/select.html" style="display: inline-block; margin-bottom: 16px;">
+          <div class="logo-title" style="font-size: clamp(28px, 6vw, 48px);">MECH ARENA</div>
+        </a>
+        <div class="select-title" style="font-size: clamp(24px, 5vw, 40px);">FORGE YOUR FIGHTER</div>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">Customize your character, choose your powers and suit!</p>
+      </header>
+
+      <!-- Alert -->
+      <div id="main-alert" class="alert" role="alert"></div>
+
+      <main>
+        <div class="glass-card auth-card">
+
+          <!-- Fighter Name -->
+          <div class="form-group">
+            <label class="form-label" for="fighter-name-input">FIGHTER NAME</label>
+            <input
+              type="text"
+              id="fighter-name-input"
+              class="form-input"
+              placeholder="Enter your fighter's name..."
+              maxlength="20"
+              autocomplete="off"
+            />
+            <div style="font-size: 11px; color: var(--text-muted); text-align: right;" id="name-counter">0 / 20</div>
+          </div>
+
+          <!-- Face Upload -->
+          <div class="form-group">
+            <div class="form-label">FACE PHOTO</div>
+            <div class="face-upload-zone" id="upload-zone" role="button" aria-label="Upload face photo">
+              <input type="file" id="face-file-input" accept="image/jpeg,image/png,image/webp" aria-label="Choose face image" />
+
+              <!-- Placeholder state -->
+              <div id="upload-placeholder">
+                <span class="upload-icon">📸</span>
+                <div style="font-family: var(--font-heading); font-size: 14px; letter-spacing: 2px; color: var(--text-secondary); margin-bottom: 8px;">DROP PHOTO HERE</div>
+                <div style="font-size: 12px; color: var(--text-muted);">or click to browse · JPG, PNG, WebP</div>
+              </div>
+
+              <!-- Preview state -->
+              <div id="upload-preview" style="display: none;">
+                <div class="face-preview-container">
+                  <img id="face-preview-img" class="face-preview-img" src="" alt="Face preview" style="display: block;" />
+                  <div class="face-preview-ring"></div>
+                </div>
+                <div style="margin-top: 12px; font-size: 12px; color: var(--hp-green);">✓ Photo ready — click to change</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Power / Element Selection -->
+          <div class="select-group">
+            <label class="form-label" for="power-select">CHOOSE POWER</label>
+            <select id="power-select">
+              <option value="fire">🔥 Fire</option>
+              <option value="ice">❄️ Ice</option>
+              <option value="lightning">⚡ Lightning</option>
+              <option value="shadow">🌑 Shadow</option>
+              <option value="earth">🪨 Earth</option>
+              <option value="wind">🌪️ Wind</option>
+              <option value="plasma">✨ Plasma</option>
+              <option value="void">🕳️ Void</option>
+            </select>
+          </div>
+
+          <!-- Suit Selection -->
+          <div class="select-group">
+            <label class="form-label" for="suit-select">CHOOSE SUIT</label>
+            <select id="suit-select">
+              <option value="default">🥋 Default Armor</option>
+              <option value="ninja">🥷 Ninja</option>
+              <option value="robot">🤖 Robot</option>
+              <option value="spiderman">🕷️ Spider-man</option>
+            </select>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Create Button -->
+          <button class="btn btn-gold" id="create-btn" disabled>
+            <span class="btn-text">⚔️ FORGE FIGHTER</span>
+            <div class="spinner"></div>
+          </button>
+
+          <a href="/select.html">
+            <button class="btn btn-secondary" style="margin-top: 10px;">← BACK TO ROSTER</button>
+          </a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/create.js"></script>
+  <script>
+    const container = document.getElementById('particles');
+    const colors = ['#ff3c00', '#ffaa00', '#ffd700'];
+    function createParticle() {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1;
+      p.style.cssText = `left:${Math.random()*100}%;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*4}s;`;
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 14000);
+    }
+    setInterval(createParticle, 600);
+    for (let i = 0; i < 6; i++) createParticle();
+  </script>
+  <!-- Footer -->
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
+    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
+  </footer></body>
+</html>

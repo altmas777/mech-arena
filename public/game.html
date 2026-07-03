@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="screen-orientation" content="landscape" />
+  <title>Battle — MECH ARENA</title>
+  <meta name="description" content="Fight in the 3D arena — MECH ARENA battle scene." />
+  <link rel="stylesheet" href="/css/style.css" />
+
+  <!-- Three.js ES Module Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- 3D Canvas -->
+  <div id="game-canvas-wrapper">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <!-- HUD Overlay (HTML over canvas) -->
+  <div id="game-ui" aria-label="Game HUD">
+
+    <!-- TOP: Health bars + Timer -->
+    <div class="hud-top">
+      <!-- Player 1 -->
+      <div class="hud-player" id="hud-p1">
+        <div class="hud-player-name" id="p1-name">PLAYER 1</div>
+        <div class="hp-bar-container">
+          <div class="hp-bar-fill" id="p1-hp-bar" style="width: 100%;"></div>
+        </div>
+        <div style="font-family: var(--font-heading); font-size: 10px; letter-spacing: 2px; color: var(--text-muted); margin-top: 4px;">
+          <span id="p1-element-badge">—</span> · <span id="p1-special">—</span>
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div class="hud-timer" style="position: relative;">
+        <button id="exit-btn" style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-family: var(--font-heading); background: rgba(20,0,0,0.8); color: var(--gold); border: 1px solid var(--blood-red); padding: 5px 15px; font-size: 14px; cursor: pointer; z-index: 1000; letter-spacing: 2px; transition: all 0.2s;">EXIT MATCH</button>
+        <div class="round-text" id="round-text" style="margin-top: 25px;">ROUND 1</div>
+        <div class="timer-value" id="timer-display">99</div>
+      </div>
+
+      <!-- Player 2 -->
+      <div class="hud-player hud-player-2" id="hud-p2">
+        <div class="hud-player-name" id="p2-name">PLAYER 2</div>
+        <div class="hp-bar-container">
+          <div class="hp-bar-fill" id="p2-hp-bar" style="width: 100%; float: right;"></div>
+        </div>
+        <div style="font-family: var(--font-heading); font-size: 10px; letter-spacing: 2px; color: var(--text-muted); margin-top: 4px; text-align: right;">
+          <span id="p2-element-badge">—</span> · <span id="p2-special">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Announcer / KO Overlay -->
+    <div id="announcer-overlay" role="dialog" aria-label="Battle result">
+      <div class="ko-text" id="ko-text">K.O.</div>
+      <div class="winner-text" id="winner-text"></div>
+      <div class="announcer-text" id="announcer-text"></div>
+      <button class="rematch-btn" id="rematch-btn">⚔️ PLAY AGAIN</button>
+    </div>
+
+    <!-- Controls hint -->
+    <div class="controls-hint" aria-label="Controls">
+      <div>
+        <span class="control-key">A</span><span class="control-key">D</span> Move
+        <span class="control-key">W</span> Jump
+        <span class="control-key">S</span> Crouch
+        <span class="control-key">F</span> Punch
+        <span class="control-key">G</span> Kick
+        <span class="control-key">H</span> Special
+      </div>
+      <div>
+        <span class="control-key">←</span><span class="control-key">→</span> Move
+        <span class="control-key">↑</span> Jump
+        <span class="control-key">↓</span> Crouch
+        <span class="control-key">1</span> Punch
+        <span class="control-key">2</span> Kick
+        <span class="control-key">3</span> Special
+      </div>
+    </div>
+
+    <!-- Waiting for opponent overlay -->
+    <div id="waiting-overlay" style="position: fixed; inset: 0; background: rgba(5,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9998; backdrop-filter: blur(10px);">
+      <div style="font-family: var(--font-display); font-size: 60px; color: var(--gold); letter-spacing: 6px; margin-bottom: 20px;">WAITING FOR CHALLENGER</div>
+      <div style="font-family: var(--font-heading); font-size: 16px; color: var(--text-secondary); letter-spacing: 4px; margin-bottom: 40px;">SHARE THIS CODE WITH YOUR OPPONENT:</div>
+      <div id="room-code-display" style="font-family: var(--font-display); font-size: 80px; letter-spacing: 20px; color: var(--fire-orange); padding: 20px 40px; border: 2px solid var(--fire-orange); background: rgba(217, 4, 41, 0.1);">XXXXXX</div>
+    </div>
+
+    <!-- Loading screen (before Three.js ready) -->
+    <div id="game-loading" style="position: fixed; inset: 0; background: var(--dark-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;">
+      <div class="logo-title" style="font-size: 60px; margin-bottom: 16px;">MECH ARENA</div>
+      <div style="font-family: var(--font-heading); font-size: 13px; letter-spacing: 4px; color: var(--gold); margin-bottom: 32px;" id="loading-status">LOADING ARENA...</div>
+      <div style="width: 200px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+        <div id="loading-bar" style="height: 100%; background: linear-gradient(90deg, var(--blood-red), var(--fire-orange)); width: 0%; transition: width 0.3s ease; border-radius: 2px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Game Logic (ES Module) -->
+  <script type="module" src="/js/game.js?v=4"></script>
+  <!-- Portrait-mode warning -->
+  <div id="rotate-overlay" style="display:none; position:fixed; inset:0; background:#000; z-index:99999; flex-direction:column; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; text-align:center;">
+    <div style="font-size:72px; margin-bottom:16px; animation: spin 2s linear infinite;">📱</div>
+    <div style="font-size:28px; color:#ffd700; letter-spacing:4px; font-weight:700;">ROTATE YOUR DEVICE</div>
+    <div style="font-size:14px; color:rgba(255,215,0,0.6); letter-spacing:2px; margin-top:8px;">LANDSCAPE MODE REQUIRED</div>
+    <style>@keyframes spin { 0%{transform:rotate(0deg)} 50%{transform:rotate(90deg)} 100%{transform:rotate(90deg)} }</style>
+  </div>
+
+  <!-- Mobile Touch Controls -->
+  <div id="mobile-controls" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:5000; pointer-events:none; padding-bottom:env(safe-area-inset-bottom,8px);">
+
+    <!-- D-PAD (left side) -->
+    <div style="position:absolute; bottom:16px; left:16px; pointer-events:auto;">
+      <div style="display:flex; justify-content:center; margin-bottom:3px;">
+        <button class="mc-btn" id="mb-up" style="width:52px;height:52px;font-size:20px;">▲</button>
+      </div>
+      <div style="display:flex; gap:3px;">
+        <button class="mc-btn" id="mb-left"  style="width:52px;height:52px;font-size:20px;">◀</button>
+        <button class="mc-btn" id="mb-down"  style="width:52px;height:52px;font-size:20px;">▼</button>
+        <button class="mc-btn" id="mb-right" style="width:52px;height:52px;font-size:20px;">▶</button>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS (right side) -->
+    <div style="position:absolute; bottom:16px; right:16px; pointer-events:auto; display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+      <div style="display:flex; gap:5px;">
+        <button class="mc-btn mc-yellow" id="mb-jump"    style="width:60px;height:44px;font-size:11px;letter-spacing:1px;">JUMP</button>
+        <button class="mc-btn mc-blue"   id="mb-block"   style="width:60px;height:44px;font-size:11px;letter-spacing:1px;">BLOCK</button>
+      </div>
+      <div style="display:flex; gap:5px;">
+        <button class="mc-btn mc-red"    id="mb-punch"   style="width:60px;height:44px;font-size:11px;letter-spacing:1px;">PUNCH</button>
+        <button class="mc-btn mc-orange" id="mb-kick"    style="width:60px;height:44px;font-size:11px;letter-spacing:1px;">KICK</button>
+        <button class="mc-btn mc-purple" id="mb-special" style="width:60px;height:44px;font-size:11px;letter-spacing:1px;">⚡SPL</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Auto-show controls on any touch/coarse device */
+    @media (pointer: coarse) {
+      #mobile-controls { display: block !important; }
+      /* Hide the keyboard hint on mobile to save space */
+      .controls-hint { display: none !important; }
+    }
+
+    .mc-btn {
+      background: rgba(0,0,0,0.7);
+      border: 1.5px solid rgba(255,215,0,0.4);
+      color: #ffd700;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      border-radius: 10px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      backdrop-filter: blur(6px);
+      cursor: pointer;
+      transition: background 0.08s, transform 0.06s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mc-btn:active, .mc-btn.pressed {
+      background: rgba(255,215,0,0.22);
+      transform: scale(0.91);
+      border-color: #ffd700;
+    }
+    .mc-red    { border-color: rgba(217,4,41,0.7);  color: #ff4466; }
+    .mc-orange { border-color: rgba(255,120,0,0.7); color: #ff8c00; }
+    .mc-purple { border-color: rgba(150,0,220,0.7); color: #c060ff; }
+    .mc-yellow { border-color: rgba(255,215,0,0.7); color: #ffd700; }
+    .mc-blue   { border-color: rgba(0,150,255,0.7); color: #40b0ff; }
+
+    /* Portrait: show rotate overlay, hide game */
+    @media (pointer: coarse) and (orientation: portrait) {
+      #rotate-overlay { display: flex !important; }
+    }
+  </style>
+
+  <script>
+    // Lock to landscape on touch devices
+    (function() {
+      if (!('ontouchstart' in window) && navigator.maxTouchPoints < 1) return;
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+      // Portrait warning toggle
+      const overlay = document.getElementById('rotate-overlay');
+      function checkOrientation() {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (overlay) overlay.style.display = isPortrait ? 'flex' : 'none';
+      }
+      window.addEventListener('resize', checkOrientation);
+      window.addEventListener('orientationchange', checkOrientation);
+      checkOrientation();
+    })();
+  </script>
+  <!-- Footer -->
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
+    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
+  </footer></body>
+</html>

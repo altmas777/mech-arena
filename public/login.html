@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — MECH ARENA</title>
+  <meta name="description" content="Sign in to MECH ARENA using your Gmail." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* Add specific styles for OTP inputs if needed */
+    .otp-inputs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .otp-input-box {
+      width: 45px;
+      height: 55px;
+      font-size: 24px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+    .otp-input-box:focus {
+      border-color: var(--fire-orange);
+      background: rgba(217, 4, 41, 0.08);
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-animated"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="page-wrapper">
+    <div class="auth-container">
+      <!-- Logo -->
+      <header class="auth-header">
+        <a href="/" style="display: inline-block;">
+          <div class="logo-title" style="font-size: clamp(36px, 8vw, 64px);">MECH ARENA</div>
+        </a>
+        <div class="logo-sub">ARENA OF LEGENDS</div>
+      </header>
+
+      <!-- Auth Card -->
+      <main>
+        <div class="glass-card auth-card" id="auth-card">
+          <!-- Step 1: Email -->
+          <section id="step-email" aria-label="Email Login">
+            <h1 style="font-family: var(--font-heading); font-size: 18px; letter-spacing: 3px; text-align: center; margin-bottom: 28px; color: var(--text-primary);">SECURE LOGIN</h1>
+            
+            <div id="alert-email" class="alert" role="alert"></div>
+
+            <form id="email-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="email-input">GMAIL ADDRESS</label>
+                <input
+                  type="email"
+                  id="email-input"
+                  class="form-input"
+                  placeholder="fighter@gmail.com"
+                  autocomplete="email"
+                  required
+                />
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="send-otp-btn">
+                <span class="btn-text">SEND LOGIN CODE</span>
+                <div class="spinner"></div>
+              </button>
+            </form>
+          </section>
+
+          <!-- Step 2: OTP & Username -->
+          <section id="step-otp" aria-label="OTP Verification" style="display: none;">
+            <h1 style="font-family: var(--font-heading); font-size: 18px; letter-spacing: 3px; text-align: center; margin-bottom: 8px; color: var(--text-primary);">ENTER CODE</h1>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 28px;" id="otp-sent-msg">Sent to your email</p>
+
+            <div id="alert-otp" class="alert" role="alert"></div>
+
+            <form id="otp-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" style="text-align:center;">6-DIGIT CODE</label>
+                <div class="otp-inputs" id="otp-inputs-container">
+                  <input type="text" maxlength="1" class="otp-input-box" required />
+                  <input type="text" maxlength="1" class="otp-input-box" required />
+                  <input type="text" maxlength="1" class="otp-input-box" required />
+                  <input type="text" maxlength="1" class="otp-input-box" required />
+                  <input type="text" maxlength="1" class="otp-input-box" required />
+                  <input type="text" maxlength="1" class="otp-input-box" required />
+                </div>
+              </div>
+
+              <!-- Username input, hidden by default unless required -->
+              <div class="form-group" id="username-group" style="display: none;">
+                <label class="form-label" for="username-input">CHOOSE A USERNAME</label>
+                <input
+                  type="text"
+                  id="username-input"
+                  class="form-input"
+                  placeholder="NinjaSlayer99"
+                  autocomplete="username"
+                />
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="verify-otp-btn">
+                <span class="btn-text">VERIFY & ENTER ARENA</span>
+                <div class="spinner"></div>
+              </button>
+              
+              <div style="text-align: center; margin-top: 16px;">
+                <button type="button" id="btn-back-email" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 11px; letter-spacing: 2px; cursor: pointer; text-decoration: underline;">
+                  ← USE DIFFERENT EMAIL
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    const container = document.getElementById('particles');
+    const colors = ['#ff3c00', '#ff6600', '#ffaa00'];
+    function createParticle() {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1;
+      p.style.cssText = `left:${Math.random()*100}%;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*4}s;`;
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 14000);
+    }
+    setInterval(createParticle, 500);
+    for (let i = 0; i < 8; i++) createParticle();
+  </script>
+  <!-- Footer -->
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
+    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
+  </footer></body>
+</html>

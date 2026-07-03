@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Main Menu — MECH ARENA</title>
+  <meta name="description" content="MECH ARENA Main Menu" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .menu-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .fighter-showcase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .fighter-showcase .fighter-face-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 0;
+      clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+      border: 3px solid var(--fire-orange);
+      object-fit: cover;
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .btn-massive {
+      padding: 24px 32px;
+      font-size: 24px;
+      letter-spacing: 8px;
+    }
+
+    .room-input-container {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border: 1px solid var(--border-subtle);
+    }
+  </style>
+</head>
+<body class="scrollable">
+  <div class="bg-animated"></div>
+
+  <div class="page-wrapper" style="min-height: 100vh; justify-content: flex-start; padding: 60px 20px 80px;">
+    
+    <header style="text-align: center; margin-bottom: 60px;">
+      <div class="logo-title">MECH ARENA</div>
+      <div class="logo-sub" style="margin-top: 10px;">ENTER THE ARENA</div>
+      <p id="user-greeting" style="color: var(--text-secondary); font-size: 14px; margin-top: 16px; font-family: var(--font-heading); letter-spacing: 4px;"></p>
+    </header>
+
+    <main class="menu-layout">
+      
+      <!-- Loading State -->
+      <div id="loading-state" style="text-align: center; color: var(--text-muted);">
+        <div class="spinner" style="display: block; margin: 0 auto 16px;"></div>
+        LOADING COMBATANT DATA...
+      </div>
+
+      <!-- Active Fighter Showcase -->
+      <div id="fighter-state" style="display: none; width: 100%; flex-direction: column; align-items: center; gap: 40px;">
+        <div class="fighter-showcase glass-card" style="padding: 30px; width: 100%; max-width: 400px; clip-path: none; border-radius: 0;">
+          <div style="font-family: var(--font-heading); font-size: 12px; letter-spacing: 4px; color: var(--gold); margin-bottom: 8px;">ACTIVE FIGHTER</div>
+          <div id="active-fighter-img"></div>
+          <h2 id="active-fighter-name" style="font-family: var(--font-display); font-size: 40px; letter-spacing: 4px; color: var(--text-primary); margin: 0;">NAME</h2>
+          <div id="active-fighter-element" style="font-family: var(--font-heading); font-size: 14px; color: var(--text-secondary); letter-spacing: 2px;">ELEMENT</div>
+          <a href="/create.html" style="margin-top: 16px;">
+            <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 11px;">+ FORGE NEW FIGHTER</button>
+          </a>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="menu-buttons">
+
+          <!-- Difficulty Selector -->
+          <div style="text-align:center;">
+            <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:4px;color:var(--text-muted);margin-bottom:10px;">SELECT DIFFICULTY</div>
+            <div style="display:flex;gap:8px;justify-content:center;">
+              <button class="diff-btn btn btn-secondary" data-diff="easy" style="flex:1;padding:10px 0;font-size:12px;letter-spacing:3px;">EASY</button>
+              <button class="diff-btn btn btn-secondary active" data-diff="normal" style="flex:1;padding:10px 0;font-size:12px;letter-spacing:3px;border-color:var(--gold);color:var(--gold);">NORMAL</button>
+              <button class="diff-btn btn btn-secondary" data-diff="hard" style="flex:1;padding:10px 0;font-size:12px;letter-spacing:3px;">HARD</button>
+            </div>
+          </div>
+
+          <button class="btn btn-gold btn-massive" id="btn-vs-ai">
+            ⚔️ FIGHT AI
+          </button>
+          <button class="btn btn-primary btn-massive" id="btn-create-room">
+            🌐 CREATE ROOM
+          </button>
+          <button class="btn btn-secondary btn-massive" id="btn-join-room" style="border:2px solid var(--text-muted);color:var(--text-primary);">
+            🔑 JOIN ROOM
+          </button>
+        </div>
+      </div>
+
+
+    </main>
+
+    <div style="text-align: center; margin-top: 80px;">
+      <button id="logout-btn" style="background: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 12px; letter-spacing: 4px; cursor: pointer; transition: color 0.2s;">LOGOUT</button>
+    </div>
+
+  </div>
+
+  <script src="/js/select.js"></script>
+  <!-- Footer -->
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
+    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
+  </footer></body>
+</html>
