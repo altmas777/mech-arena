@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -183,7 +183,13 @@
 
     socket.on('connect', () => {
       if (mode === 'create') {
-        socket.emit('createRoom', myFighter);
+        if (roomCode) {
+          // We already created a room, just rejoining the lobby socket room
+          socket.emit('rejoinLobby', { code: roomCode, fighterData: myFighter });
+        } else {
+          // First time connecting
+          socket.emit('createRoom', myFighter);
+        }
       }
     });
 

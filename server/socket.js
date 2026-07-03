@@ -30,6 +30,28 @@ function setupSockets(server) {
       console.log(`[SOCKET] Room created: ${code}`);
     });
 
+    socket.on('rejoinLobby', ({ code, fighterData }) => {
+      const room = rooms[code];
+      if (room && room.p1 && !room.p1.socket) {
+        // Host reconnected to lobby
+        room.p1.socket = socket;
+        socket.join(code);
+        socket.roomCode = code;
+        socket.role = 'p1';
+        console.log(`[SOCKET] Host rejoined lobby room ${code}`);
+        
+        // If P2 joined while host was disconnected, trigger the match now
+        if (room.matchPending && room.p2) {
+          socket.emit('matchFound', {
+            role: 'p1',
+            opponentFighter: room.p2.data,
+            roomId: code
+          });
+          room.matchPending = false;
+        }
+      }
+    });
+
     // ── LOBBY: Join a room ───────────────────────────────────────────────────
     socket.on('joinRoom', ({ code, fighterData }) => {
       code = code.toUpperCase();
@@ -49,12 +71,17 @@ function setupSockets(server) {
       socket.roomCode = code;
       socket.role     = 'p2';
 
-      // Tell host: opponent joined
-      room.p1.socket.emit('matchFound', {
-        role:            'p1',
-        opponentFighter: fighterData,
-        roomId:          code,
-      });
+      // Tell host: opponent joined (if host is still connected)
+      if (room.p1 && room.p1.socket) {
+        room.p1.socket.emit('matchFound', {
+          role:            'p1',
+          opponentFighter: fighterData,
+          roomId:          code,
+        });
+      } else {
+        // Host is temporarily disconnected. We save the match state so when they reconnect, they get it.
+        room.matchPending = true;
+      }
 
       // Tell joiner: match found
       socket.emit('matchFound', {
@@ -144,7 +171,7 @@ function setupSockets(server) {
       if (isP1) room.p1.socket = null;
       if (isP2) room.p2.socket = null;
 
-      // Allow 5 seconds for page transition (lobby -> game)
+      // Allow 60 seconds for mobile users to switch apps/reconnect before destroying room
       setTimeout(() => {
         const currentRoom = rooms[code];
         if (currentRoom) {
@@ -158,7 +185,7 @@ function setupSockets(server) {
              console.log(`[SOCKET] Room ${code} closed due to disconnect timeout`);
           }
         }
-      }, 5000);
+      }, 60000);
     });
   });
 }
