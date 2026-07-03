@@ -4,31 +4,64 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login — MECH ARENA</title>
-  <meta name="description" content="Sign in to MECH ARENA using your Gmail." />
+  <meta name="description" content="Sign in or create your account for MECH ARENA." />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
-    /* Add specific styles for OTP inputs if needed */
-    .otp-inputs {
+    .auth-tabs {
       display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 28px;
     }
+    .auth-tab {
+      flex: 1; padding: 12px 0;
+      font-family: var(--font-heading); font-size: 12px; letter-spacing: 3px;
+      color: var(--text-muted); background: none; border: none;
+      border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.25s;
+      margin-bottom: -1px;
+    }
+    .auth-tab.active { color: var(--fire-orange); border-bottom-color: var(--fire-orange); }
+    .auth-tab:hover:not(.active) { color: var(--text-secondary); }
+
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; animation: fadeUp 0.3s ease both; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .otp-inputs { display:flex; gap:10px; justify-content:center; margin-bottom:20px; }
     .otp-input-box {
-      width: 45px;
-      height: 55px;
-      font-size: 24px;
-      text-align: center;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-primary);
-      transition: all 0.2s ease;
+      width:45px; height:55px; font-size:24px; text-align:center;
+      background:rgba(0,0,0,0.6); border:1px solid var(--border-subtle);
+      color:var(--text-primary); transition:all 0.2s; border-radius:4px;
     }
-    .otp-input-box:focus {
-      border-color: var(--fire-orange);
-      background: rgba(217, 4, 41, 0.08);
-      outline: none;
-    }
+    .otp-input-box:focus { border-color:var(--fire-orange); background:rgba(217,4,41,0.08); outline:none; }
+
+    .step-indicator { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:22px; }
+    .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border-subtle); transition:all 0.3s; }
+    .step-dot.active { background:var(--fire-orange); transform:scale(1.3); }
+    .step-dot.done   { background:#2b9348; }
+    .step-line { width:40px; height:1px; background:var(--border-subtle); transition:background 0.3s; }
+    .step-line.done { background:#2b9348; }
+
+    .divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--text-muted); font-family:var(--font-heading); font-size:10px; letter-spacing:2px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border-subtle); }
+
+    .pass-wrap { position:relative; }
+    .pass-wrap .form-input { padding-right:46px; }
+    .pass-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; transition:color 0.2s; }
+    .pass-toggle:hover { color:var(--text-secondary); }
+
+    .resend-row { text-align:center; margin-top:12px; }
+    .resend-btn { background:none; border:none; color:var(--text-muted); font-family:var(--font-heading); font-size:10px; letter-spacing:2px; cursor:pointer; text-decoration:underline; transition:color 0.2s; }
+    .resend-btn:hover:not(:disabled) { color:var(--fire-orange); }
+    .resend-btn:disabled { cursor:default; text-decoration:none; }
+
+    .strength-bar-wrap { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:6px; overflow:hidden; }
+    .strength-bar { height:100%; width:0%; border-radius:2px; transition:width 0.3s,background 0.3s; }
+
+    .ghost-btn { width:100%; background:transparent; border:1px solid var(--border-subtle); color:var(--text-secondary); font-family:var(--font-heading); font-size:11px; letter-spacing:3px; padding:13px; border-radius:2px; cursor:pointer; transition:all 0.2s; }
+    .ghost-btn:hover { border-color:var(--fire-orange); color:var(--fire-orange); }
   </style>
 </head>
 <body>
@@ -37,87 +70,122 @@
 
   <div class="page-wrapper">
     <div class="auth-container">
-      <!-- Logo -->
       <header class="auth-header">
-        <a href="/" style="display: inline-block;">
-          <div class="logo-title" style="font-size: clamp(36px, 8vw, 64px);">MECH ARENA</div>
+        <a href="/" style="display:inline-block;">
+          <div class="logo-title" style="font-size:clamp(36px,8vw,64px);">MECH ARENA</div>
         </a>
         <div class="logo-sub">ARENA OF LEGENDS</div>
       </header>
 
-      <!-- Auth Card -->
       <main>
         <div class="glass-card auth-card" id="auth-card">
-          <!-- Step 1: Email -->
-          <section id="step-email" aria-label="Email Login">
-            <h1 style="font-family: var(--font-heading); font-size: 18px; letter-spacing: 3px; text-align: center; margin-bottom: 28px; color: var(--text-primary);">SECURE LOGIN</h1>
-            
-            <div id="alert-email" class="alert" role="alert"></div>
 
-            <form id="email-form" novalidate>
+          <!-- TABS -->
+          <div class="auth-tabs" id="auth-tabs">
+            <button class="auth-tab active" id="tab-login"  onclick="switchTab('login')">LOGIN</button>
+            <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">SIGN UP</button>
+          </div>
+
+          <!-- ── LOGIN PANEL ── -->
+          <div class="auth-panel active" id="panel-login">
+            <div id="alert-login" class="alert" role="alert"></div>
+            <form id="login-form" novalidate>
               <div class="form-group">
-                <label class="form-label" for="email-input">GMAIL ADDRESS</label>
-                <input
-                  type="email"
-                  id="email-input"
-                  class="form-input"
-                  placeholder="fighter@gmail.com"
-                  autocomplete="email"
-                  required
-                />
+                <label class="form-label" for="login-email">EMAIL ADDRESS</label>
+                <input type="email" id="login-email" class="form-input" placeholder="fighter@gmail.com" autocomplete="email" required />
               </div>
-
-              <button type="submit" class="btn btn-primary" id="send-otp-btn">
-                <span class="btn-text">SEND LOGIN CODE</span>
-                <div class="spinner"></div>
-              </button>
-            </form>
-          </section>
-
-          <!-- Step 2: OTP & Username -->
-          <section id="step-otp" aria-label="OTP Verification" style="display: none;">
-            <h1 style="font-family: var(--font-heading); font-size: 18px; letter-spacing: 3px; text-align: center; margin-bottom: 8px; color: var(--text-primary);">ENTER CODE</h1>
-            <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 28px;" id="otp-sent-msg">Sent to your email</p>
-
-            <div id="alert-otp" class="alert" role="alert"></div>
-
-            <form id="otp-form" novalidate>
               <div class="form-group">
-                <label class="form-label" style="text-align:center;">6-DIGIT CODE</label>
-                <div class="otp-inputs" id="otp-inputs-container">
-                  <input type="text" maxlength="1" class="otp-input-box" required />
-                  <input type="text" maxlength="1" class="otp-input-box" required />
-                  <input type="text" maxlength="1" class="otp-input-box" required />
-                  <input type="text" maxlength="1" class="otp-input-box" required />
-                  <input type="text" maxlength="1" class="otp-input-box" required />
-                  <input type="text" maxlength="1" class="otp-input-box" required />
+                <label class="form-label" for="login-pass">PASSWORD</label>
+                <div class="pass-wrap">
+                  <input type="password" id="login-pass" class="form-input" placeholder="••••••••" autocomplete="current-password" required />
+                  <button type="button" class="pass-toggle" onclick="togglePass('login-pass',this)">👁</button>
                 </div>
               </div>
-
-              <!-- Username input, hidden by default unless required -->
-              <div class="form-group" id="username-group" style="display: none;">
-                <label class="form-label" for="username-input">CHOOSE A USERNAME</label>
-                <input
-                  type="text"
-                  id="username-input"
-                  class="form-input"
-                  placeholder="NinjaSlayer99"
-                  autocomplete="username"
-                />
-              </div>
-
-              <button type="submit" class="btn btn-primary" id="verify-otp-btn">
-                <span class="btn-text">VERIFY & ENTER ARENA</span>
+              <button type="submit" class="btn btn-primary" id="login-btn" style="margin-top:8px;">
+                <span class="btn-text">ENTER ARENA</span>
                 <div class="spinner"></div>
               </button>
-              
-              <div style="text-align: center; margin-top: 16px;">
-                <button type="button" id="btn-back-email" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-heading); font-size: 11px; letter-spacing: 2px; cursor: pointer; text-decoration: underline;">
-                  ← USE DIFFERENT EMAIL
+            </form>
+            <div class="divider">NO ACCOUNT?</div>
+            <button class="ghost-btn" onclick="switchTab('signup')">CREATE ACCOUNT</button>
+          </div>
+
+          <!-- ── SIGN UP PANEL ── -->
+          <div class="auth-panel" id="panel-signup">
+            <div class="step-indicator">
+              <div class="step-dot active" id="dot-1"></div>
+              <div class="step-line" id="line-1"></div>
+              <div class="step-dot" id="dot-2"></div>
+            </div>
+
+            <!-- STEP 1: Details -->
+            <div id="signup-step1">
+              <h2 style="font-family:var(--font-heading);font-size:13px;letter-spacing:3px;text-align:center;margin-bottom:20px;">CREATE ACCOUNT</h2>
+              <div id="alert-signup" class="alert" role="alert"></div>
+              <form id="signup-form" novalidate>
+                <div class="form-group">
+                  <label class="form-label" for="signup-name">USERNAME</label>
+                  <input type="text" id="signup-name" class="form-input" placeholder="NinjaSlayer99" autocomplete="username" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="signup-email">EMAIL ADDRESS</label>
+                  <input type="email" id="signup-email" class="form-input" placeholder="fighter@gmail.com" autocomplete="email" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="signup-pass">
+                    PASSWORD
+                    <span id="strength-label" style="color:var(--text-muted);font-size:9px;float:right;letter-spacing:1px;"></span>
+                  </label>
+                  <div class="pass-wrap">
+                    <input type="password" id="signup-pass" class="form-input" placeholder="Min. 6 characters" autocomplete="new-password" required />
+                    <button type="button" class="pass-toggle" onclick="togglePass('signup-pass',this)">👁</button>
+                  </div>
+                  <div class="strength-bar-wrap"><div class="strength-bar" id="strength-bar"></div></div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="signup-btn" style="margin-top:8px;">
+                  <span class="btn-text">SEND VERIFICATION CODE</span>
+                  <div class="spinner"></div>
+                </button>
+              </form>
+              <div class="divider">HAVE AN ACCOUNT?</div>
+              <button class="ghost-btn" onclick="switchTab('login')">GO TO LOGIN</button>
+            </div>
+
+            <!-- STEP 2: OTP -->
+            <div id="signup-step2" style="display:none;">
+              <h2 style="font-family:var(--font-heading);font-size:13px;letter-spacing:3px;text-align:center;margin-bottom:6px;">VERIFY EMAIL</h2>
+              <p style="text-align:center;color:var(--text-muted);font-size:12px;margin-bottom:20px;letter-spacing:1px;" id="otp-sent-to">Code sent to your email</p>
+              <div id="alert-otp" class="alert" role="alert"></div>
+              <form id="otp-form" novalidate>
+                <div class="form-group" style="text-align:center;">
+                  <label class="form-label" style="display:block;text-align:center;margin-bottom:14px;">6-DIGIT CODE</label>
+                  <div class="otp-inputs">
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-input-box" />
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-input-box" />
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-input-box" />
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-input-box" />
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-input-box" />
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-input-box" />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="verify-otp-btn">
+                  <span class="btn-text">VERIFY &amp; CREATE ACCOUNT</span>
+                  <div class="spinner"></div>
+                </button>
+              </form>
+              <div class="resend-row">
+                <button class="resend-btn" id="resend-btn">RESEND CODE</button>
+                <span id="resend-timer" style="font-family:var(--font-heading);font-size:10px;color:var(--text-muted);letter-spacing:2px;display:none;"></span>
+              </div>
+              <div style="text-align:center;margin-top:14px;">
+                <button type="button" id="back-btn" style="background:none;border:none;color:var(--text-muted);font-family:var(--font-heading);font-size:10px;letter-spacing:2px;cursor:pointer;text-decoration:underline;">
+                  ← CHANGE DETAILS
                 </button>
               </div>
-            </form>
-          </section>
+            </div>
+          </div>
+          <!-- end panel-signup -->
+
         </div>
       </main>
     </div>
@@ -126,20 +194,20 @@
   <script src="/js/auth.js"></script>
   <script>
     const container = document.getElementById('particles');
-    const colors = ['#ff3c00', '#ff6600', '#ffaa00'];
+    const colors = ['#ff3c00','#ff6600','#ffaa00'];
     function createParticle() {
       const p = document.createElement('div');
       p.className = 'particle';
-      const size = Math.random() * 3 + 1;
+      const size = Math.random()*3+1;
       p.style.cssText = `left:${Math.random()*100}%;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*4}s;`;
       container.appendChild(p);
-      setTimeout(() => p.remove(), 14000);
+      setTimeout(()=>p.remove(),14000);
     }
-    setInterval(createParticle, 500);
-    for (let i = 0; i < 8; i++) createParticle();
+    setInterval(createParticle,500);
+    for(let i=0;i<8;i++) createParticle();
   </script>
-  <!-- Footer -->
-  <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 6px 0; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 3px; color: rgba(255,215,0,0.35); background: transparent; pointer-events: none; z-index: 9999;">
-    DEVELOPED BY <span style="color: rgba(255,215,0,0.6); font-weight: 700;">MR. ALTMASH</span>
-  </footer></body>
+  <footer style="position:fixed;bottom:0;left:0;right:0;text-align:center;padding:6px 0;font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:3px;color:rgba(255,215,0,0.35);background:transparent;pointer-events:none;z-index:9999;">
+    DEVELOPED BY <span style="color:rgba(255,215,0,0.6);font-weight:700;">MR. ALTMASH</span>
+  </footer>
+</body>
 </html>

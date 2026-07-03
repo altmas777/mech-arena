@@ -170,18 +170,63 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const token = localStorage.getItem('ff_token');
-    if (!token) window.location.href = '/login.html';
+    if (!token) {
+      window.location.href = '/login.html';
+      throw new Error('Redirecting to login');
+    }
 
     const params   = new URLSearchParams(window.location.search);
     const mode     = params.get('mode');   // 'create' or 'join'
-    const myFighter = JSON.parse(sessionStorage.getItem('ff_p1') || 'null');
+    
+    // ── Fighter data: sessionStorage first, then localStorage fallback ──────
+    let myFighter = null;
+    try {
+      const raw = sessionStorage.getItem('ff_p1');
+      if (raw) myFighter = JSON.parse(raw);
+    } catch(e) {}
+    
+    // localStorage fallback — some mobile browsers clear sessionStorage on navigation
+    if (!myFighter) {
+      try {
+        const userStr = localStorage.getItem('ff_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          const email = user.email || 'guest';
+          const key = `ff_p1_${email}`;
+          const raw2 = localStorage.getItem(key);
+          if (raw2) {
+            myFighter = JSON.parse(raw2);
+            // Restore to sessionStorage for next time
+            sessionStorage.setItem('ff_p1', raw2);
+          } else if (user.fighters && user.fighters.length > 0) {
+            myFighter = user.fighters[user.fighters.length - 1];
+            sessionStorage.setItem('ff_p1', JSON.stringify(myFighter));
+          }
+        }
+      } catch(e) {}
+    }
 
-    if (!myFighter) window.location.href = '/select.html';
+    if (!myFighter) {
+      window.location.href = '/select.html';
+      throw new Error('Redirecting to select');
+    }
 
-    const socket = io();
+    // ── Socket with timeout ──────────────────────────────────────────────────
+    const socket = io({
+      timeout: 10000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1500,
+    });
     let roomCode = null;
+    let socketReady = false;
+
+    // Show connection error if socket fails
+    socket.on('connect_error', (err) => {
+      console.error('[LOBBY] Socket connect error:', err.message);
+    });
 
     socket.on('connect', () => {
+      socketReady = true;
       if (mode === 'create') {
         if (roomCode) {
           // We already created a room, just rejoining the lobby socket room
@@ -192,6 +237,7 @@
         }
       }
     });
+
 
     // ── CREATE MODE ──────────────────────────────────────────────────────────────
 

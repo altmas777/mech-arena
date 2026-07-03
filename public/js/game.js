@@ -98,6 +98,18 @@ window.addEventListener('keyup', e => {
   if (e.code==='KeyQ') atk.p1Block = false; // release block on keyup
 });
 
+// ── Mobile fix: clear ALL stuck keys when page loses focus or becomes hidden ──
+function clearAllInputs() {
+  for (const k in keys) keys[k] = false;
+  atk.p1Punch = atk.p1Kick = atk.p1Jump = atk.p1Special = atk.p1Block = false;
+  atk.p2Punch = atk.p2Kick = atk.p2Jump = atk.p2Special = false;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clearAllInputs();
+});
+window.addEventListener('blur', clearAllInputs);
+window.addEventListener('contextmenu', clearAllInputs); // long-press context menu on mobile
+
 // ─── MOBILE TOUCH CONTROLS ────────────────────────────────────────────────────
 
 (function setupMobileControls() {
@@ -1791,10 +1803,19 @@ function startGameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
+// ── Mobile fix: pause/resume clock on visibility change to prevent huge delta spikes ──
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && clock) {
+    clock.getDelta(); // consume accumulated time so next frame delta = ~0
+  }
+});
+
 function gameLoop() {
   if (!gameState.over) requestAnimationFrame(gameLoop);
-  const delta = Math.min(clock.getDelta(), 0.05);
+  // Cap delta hard — prevents huge jump after tab switch/phone unlock
+  const delta = Math.min(clock.getDelta(), 0.033); // max ~30fps worth of delta
   elapsed += delta;
+
 
   // Environment animations
   (scene.userData.torchLights||[]).forEach(({light,seed}) => {

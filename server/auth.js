@@ -27,41 +27,80 @@ function authenticateJWT(req, res, next) {
 
 // ─── OTP AUTHENTICATION ────────────────────────────────────────────────────────
 
-// 1. Send OTP
-router.post('/otp/send', async (req, res) => {
+// ─── AUTHENTICATION ROUTES ──────────────────────────────────────────────────────
+
+// 1. SIGN UP
+router.post('/signup', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, username, password } = req.body;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: 'Valid email is required' });
     }
+    if (!username || username.trim().length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Check if email already in use
+    const allUsers = await getAllUsers();
+    let existingUser = await findUserByEmail(email);
+
+    if (existingUser && existingUser.isVerified) {
+      return res.status(400).json({ error: 'Email is already registered. Please login.' });
+    }
+
+    // Check if username taken (only consider verified users for username conflicts)
+    if (allUsers.some(u => u.username && u.username.toLowerCase() === username.toLowerCase() && u.isVerified)) {
+      return res.status(400).json({ error: 'Username is already taken' });
+    }
+
+    // Hash password
     const salt = await bcrypt.genSalt(10);
-    const otpHash = await bcrypt.hash(otp, salt);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Save or update user as unverified
+    if (existingUser) {
+      existingUser.username = username;
+      existingUser.password_hash = passwordHash;
+      existingUser.isVerified = false;
+      await saveUser(existingUser);
+    } else {
+      await saveUser({
+        email: email.toLowerCase(),
+        username: username,
+        password_hash: passwordHash,
+        isVerified: false,
+        fighters: []
+      });
+    }
+
+    // Generate 6-digit OTP for email verification
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpSalt = await bcrypt.genSalt(10);
+    const otpHash = await bcrypt.hash(otp, otpSalt);
     
     // Expires in 10 minutes
     const expiresAt = new Date(Date.now() + 10 * 60000);
 
     await saveOTP(email, otpHash, expiresAt);
-
-    // Send email via Brevo
     await sendOTPEmail(email, otp);
 
-    console.log(`[AUTH] OTP sent to ${email}`);
+    console.log(`[AUTH] Signup initiated, OTP sent to ${email}`);
     res.json({ success: true, message: 'OTP sent successfully' });
 
   } catch (err) {
-    console.error('[AUTH] Send OTP error:', err.message);
-    res.status(500).json({ error: 'Failed to send OTP. Please try again.' });
+    console.error('[AUTH] Signup error:', err.message);
+    res.status(500).json({ error: 'Signup failed. Please try again.' });
   }
 });
 
-// 2. Verify OTP and Login
-router.post('/otp/verify', async (req, res) => {
+// 2. VERIFY SIGNUP OTP
+router.post('/verify', async (req, res) => {
   try {
-    const { email, otp, username } = req.body;
+    const { email, otp } = req.body;
 
     if (!email || !otp) {
       return res.status(400).json({ error: 'Email and OTP are required' });
@@ -85,32 +124,69 @@ router.post('/otp/verify', async (req, res) => {
     // Clear OTP after successful verification
     await clearOTP(email);
 
-    // Find or create user
+    // Mark user as verified
     let user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    if (!user || !user.username) {
-      if (!username) {
-        return res.status(400).json({ error: 'USERNAME_REQUIRED' });
-      }
-      
-      // Check if username is taken
-      const allUsers = await getAllUsers();
-      if (allUsers.some(u => u.username && u.username.toLowerCase() === username.toLowerCase())) {
-        return res.status(400).json({ error: 'Username is already taken' });
-      }
+    user.isVerified = true;
+    user = await saveUser(user);
 
-      if (user) {
-        user.username = username;
-        if (!user.fighters) user.fighters = [];
-        user = await saveUser(user);
-      } else {
-        user = await saveUser({
-          email: email.toLowerCase(),
-          username: username,
-          fighters: []
-        });
+    // Issue JWT
+    const token = jwt.sign(
+      { id: user.id || user._id, email: user.email, username: user.username },
+      process.env.JWT_SECRET || 'dev_secret',
+      { expiresIn: '7d' }
+    );
+
+    console.log(`[AUTH] User verified and logged in: ${email}`);
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id || user._id,
+        email: user.email,
+        username: user.username,
+        fighters: user.fighters || []
       }
-      console.log(`[AUTH] New user created/updated via OTP Auth: ${email} (${username})`);
+    });
+
+  } catch (err) {
+    console.error('[AUTH] Verify error:', err.message);
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
+  }
+});
+
+// 3. LOGIN
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const user = await findUserByEmail(email);
+    
+    // Allow unverified users to login if they previously used the old OTP system 
+    // and just happened to set a password? No, let's enforce verification, OR
+    // handle legacy users (users who have no password_hash).
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!user.password_hash) {
+      return res.status(400).json({ error: 'Legacy account detected. Please Sign Up again with this email to set a password.' });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ error: 'Email is not verified. Please sign up to receive an OTP.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Issue JWT
@@ -133,8 +209,8 @@ router.post('/otp/verify', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[AUTH] Verify OTP error:', err.message);
-    res.status(500).json({ error: 'Verification failed. Please try again.' });
+    console.error('[AUTH] Login error:', err.message);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
   }
 });
 

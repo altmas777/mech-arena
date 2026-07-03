@@ -22,7 +22,7 @@ let activeFighter = null;
 let selectedDifficulty = 'normal'; // default
 
 async function init() {
-  if (currentUser?.email) {
+  if (currentUser && currentUser.email) {
     const name = currentUser.username || currentUser.email.split('@')[0];
     document.getElementById('user-greeting').textContent = `WELCOME BACK, ${name.toUpperCase()}`;
   }
@@ -50,9 +50,11 @@ async function init() {
     // Always use the LATEST fighter (last in array = most recently created)
     activeFighter = data.fighters[data.fighters.length - 1];
     // Store fresh fighter data in sessionStorage keyed by user email for uniqueness
-    const storageKey = `ff_p1_${currentUser?.email || 'guest'}`;
+    const storageKey = `ff_p1_${(currentUser && currentUser.email) ? currentUser.email : 'guest'}`;
     sessionStorage.setItem('ff_p1', JSON.stringify(activeFighter));
     sessionStorage.setItem(storageKey, JSON.stringify(activeFighter));
+    // Also persist to localStorage so lobby.html can recover if sessionStorage is cleared on mobile
+    localStorage.setItem(storageKey, JSON.stringify(activeFighter));
 
     // Update localStorage with fresh fighter list too
     if (currentUser) {
@@ -64,7 +66,7 @@ async function init() {
     document.getElementById('fighter-state').style.display = 'flex';
     document.getElementById('active-fighter-name').textContent = activeFighter.name.toUpperCase();
 
-    const element = activeFighter.stats?.element || 'fire';
+    const element = (activeFighter.stats && activeFighter.stats.element) || 'fire';
     const suit = activeFighter.suit || 'default';
     document.getElementById('active-fighter-element').textContent = `POWER: ${element.toUpperCase()} | SUIT: ${suit.toUpperCase()}`;
 

@@ -21,11 +21,12 @@ const FighterSchema = new mongoose.Schema({
 // ─── USER SCHEMA ─────────────────────────────────────────────────────────────
 
 const UserSchema = new mongoose.Schema({
-  // Unique identifier — Google email acts as the user's ID key
-  email:      { type: String, required: true, unique: true, lowercase: true, trim: true },
-  username:   { type: String, required: true, trim: true },
-  google_id:  { type: String },  // for future real Google OAuth
-  fighters:   { type: [FighterSchema], default: [] },
+  email:         { type: String, required: true, unique: true, lowercase: true, trim: true },
+  username:      { type: String, required: true, trim: true },
+  password_hash: { type: String },
+  isVerified:    { type: Boolean, default: false },
+  google_id:     { type: String },
+  fighters:      { type: [FighterSchema], default: [] },
   // OTP for email auth
   otp_hash:    { type: String },
   otp_expires: { type: Date },
