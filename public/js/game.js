@@ -1938,7 +1938,7 @@ async function main() {
 
       // Assign fighter roles: I am always P1 visually, opponent is P2
       // But server assigned real roles — we use them for socket sync direction
-      socket = io();
+      socket = io({ transports: ['websocket'] });
 
       // Rejoin the socket room so we can receive events
       socket.on('connect', () => {

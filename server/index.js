@@ -186,11 +186,27 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 setupSockets(server);
 
+const os = require('os');
+
+const getLocalIP = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+};
+
 const startServer = (portToTry) => {
-  server.listen(portToTry, () => {
+  server.listen(portToTry, '0.0.0.0', () => {
+    const networkIP = getLocalIP();
     console.log(`\n${'='.repeat(50)}`);
     console.log(`  ⚡ MECH ARENA SERVER RUNNING`);
-    console.log(`  🌐 http://localhost:${portToTry}`);
+    console.log(`  🏠 Local:   http://localhost:${portToTry}`);
+    console.log(`  🌐 Network: http://${networkIP}:${portToTry}  <-- USE THIS ON MOBILE`);
     console.log(`  📧 Brevo: ${process.env.BREVO_API_KEY && process.env.BREVO_API_KEY !== 'your_brevo_api_key_here' ? '✅ Configured' : '⚠️  Dev Mode (check console for OTPs)'}`);
     console.log(`  🤖 Gemini: ${process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here' ? '✅ Configured' : '⚠️  Dev Mode (mock stats)'}`);
     console.log(`${'='.repeat(50)}\n`);

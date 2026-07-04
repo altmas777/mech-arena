@@ -216,6 +216,7 @@
       timeout: 10000,
       reconnectionAttempts: 5,
       reconnectionDelay: 1500,
+      transports: ['websocket'], // Force WebSockets to prevent polling disconnects
     });
     let roomCode = null;
     let socketReady = false;

@@ -7,7 +7,10 @@ const rooms = {};
 
 function setupSockets(server) {
   io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] }
+    cors: { origin: '*', methods: ['GET', 'POST'] },
+    pingInterval: 25000,
+    pingTimeout: 60000,
+    transports: ['websocket', 'polling']
   });
 
   io.on('connection', (socket) => {
