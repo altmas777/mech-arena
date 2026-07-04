@@ -123,11 +123,14 @@ document.getElementById('btn-join-room').addEventListener('click', () => {
 
 // ─── LOGOUT ──────────────────────────────────────────────────────────────────
 
-document.getElementById('logout-btn').addEventListener('click', () => {
-  localStorage.removeItem('ff_token');
-  localStorage.removeItem('ff_user');
-  sessionStorage.clear();
-  window.location.href = '/';
-});
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('ff_token');
+    localStorage.removeItem('ff_user');
+    sessionStorage.clear();
+    window.location.href = '/';
+  });
+}
 
 init();

@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -158,7 +158,11 @@ app.get('/api/health', (req, res) => {
 
 // ─── CATCH-ALL (SPA) ─────────────────────────────────────────────────────────
 
-app.get('*', (req, res) => {
+// Only handle GET requests that don't start with /api or /auth to let those APIs fail properly or hit their routes
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/auth')) {
+    return next();
+  }
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 

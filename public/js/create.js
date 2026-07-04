@@ -134,6 +134,13 @@ createBtn.addEventListener('click', async () => {
     storedUser.fighters.push(data.fighter);
     localStorage.setItem('ff_user', JSON.stringify(storedUser));
 
+    // Save active fighter to sessionStorage and localStorage matching select.js
+    const email = storedUser.email || 'guest';
+    const storageKey = `ff_p1_${email}`;
+    sessionStorage.setItem('ff_p1', JSON.stringify(data.fighter));
+    sessionStorage.setItem(storageKey, JSON.stringify(data.fighter));
+    localStorage.setItem(storageKey, JSON.stringify(data.fighter));
+
     showAlert('Fighter created! Heading to the roster...', 'success');
     setTimeout(() => {
       window.location.href = '/select.html';
