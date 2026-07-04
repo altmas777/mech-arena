@@ -10,7 +10,8 @@ function setupSockets(server) {
     cors: { origin: '*', methods: ['GET', 'POST'] },
     pingInterval: 25000,
     pingTimeout: 60000,
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    maxHttpBufferSize: 1e7 // 10MB limit (default is 1MB which drops connection if base64 image is too large)
   });
 
   io.on('connection', (socket) => {
