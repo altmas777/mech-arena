@@ -166,6 +166,21 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
+// ─── ERROR HANDLING ──────────────────────────────────────────────────────────
+
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Payload too large. Please upload a smaller image.' });
+  }
+  if (err.type === 'request.aborted') {
+    console.warn(`[WARN] Request aborted by client: ${req.method} ${req.originalUrl}`);
+    // A 400 response because the client closed the connection before sending the full payload
+    return res.status(400).json({ error: 'Request aborted' });
+  }
+  console.error('[ERROR] Unhandled error:', err.message || err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
 // ─── START SERVER ─────────────────────────────────────────────────────────────
 
 const server = http.createServer(app);
